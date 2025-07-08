@@ -126,11 +126,25 @@ class Text(x: Double = 10.0, y: Double = 10.0, scale: Float = 1F, side: Side = S
 
     private var displayString by text("DisplayText", "")
 
-    private val textColorMode by choices("Text-ColorMode", arrayOf("Custom", "Rainbow", "Gradient"), "Custom")
+    private val textColorMode by choices("Text-ColorMode", arrayOf("Custom", "Rainbow", "Gradient", "Sakura", "RedPastel"), "Custom")
+    // Sakura gradient: vivid pink-white
+    private val sakuraGradient = listOf(
+        floatArrayOf(1.0f, 0.65f, 0.85f, 1.0f),
+        floatArrayOf(1.0f, 0.45f, 0.7f, 1.0f),
+        floatArrayOf(1.0f, 0.85f, 0.95f, 1.0f),
+        floatArrayOf(1.0f, 0.95f, 1.0f, 1.0f)
+    )
+    // Red pastel gradient: red to white
+    private val redPastelGradient = listOf(
+        floatArrayOf(1.0f, 0.4f, 0.4f, 1.0f),
+        floatArrayOf(1.0f, 0.7f, 0.7f, 1.0f),
+        floatArrayOf(1.0f, 0.9f, 0.9f, 1.0f),
+        floatArrayOf(1.0f, 1.0f, 1.0f, 1.0f)
+    )
 
     private val colors = ColorSettingsInteger(this, "TextColor", applyMax = true) { textColorMode == "Custom" }
 
-    private val gradientTextSpeed by float("Text-Gradient-Speed", 1f, 0.5f..10f) { textColorMode == "Gradient" }
+    private val gradientTextSpeed by float("Text-Gradient-Speed", 2.5f, 1.0f..10f) { textColorMode == "Gradient" || textColorMode == "Sakura" || textColorMode == "RedPastel" }
 
     private val maxTextGradientColors by int("Max-Text-Gradient-Colors", 4, 1..MAX_GRADIENT_COLORS)
     { textColorMode == "Gradient" }
@@ -373,19 +387,48 @@ class Text(x: Double = 10.0, y: Double = 10.0, scale: Float = 1F, side: Side = S
 
                 val colorToUse = if (rainbow || gradient) 0 else color.rgb
 
-                GradientFontShader.begin(
-                    gradient,
-                    gradientX,
-                    gradientY,
-                    textGradColors.toColorArray(maxTextGradientColors),
-                    gradientTextSpeed,
-                    gradientOffset
-                ).use {
-                    RainbowFontShader.begin(rainbow, rainbowX, rainbowY, rainbowOffset).use {
-                        fontRenderer.drawString(displayText, 0F, 2 - heightPadding, colorToUse, shadow)
-
+                if (textColorMode == "Sakura") {
+                    GradientFontShader.begin(
+                        true,
+                        gradientX,
+                        gradientY,
+                        sakuraGradient,
+                        2.5f,
+                        gradientOffset
+                    ).use {
+                        fontRenderer.drawString(displayText, 0F, 2 - heightPadding, Color.WHITE.rgb, shadow)
                         if (editMode && mc.currentScreen is GuiHudDesigner && editTicks <= 40) {
-                            fontRenderer.drawString("_", width - underscoreWidth, 0F, colorToUse, shadow)
+                            fontRenderer.drawString("_", width - underscoreWidth, 0F, Color.WHITE.rgb, shadow)
+                        }
+                    }
+                } else if (textColorMode == "RedPastel") {
+                    GradientFontShader.begin(
+                        true,
+                        gradientX,
+                        gradientY,
+                        redPastelGradient,
+                        2.5f,
+                        gradientOffset
+                    ).use {
+                        fontRenderer.drawString(displayText, 0F, 2 - heightPadding, Color.WHITE.rgb, shadow)
+                        if (editMode && mc.currentScreen is GuiHudDesigner && editTicks <= 40) {
+                            fontRenderer.drawString("_", width - underscoreWidth, 0F, Color.WHITE.rgb, shadow)
+                        }
+                    }
+                } else {
+                    GradientFontShader.begin(
+                        gradient,
+                        gradientX,
+                        gradientY,
+                        textGradColors.toColorArray(maxTextGradientColors),
+                        gradientTextSpeed,
+                        gradientOffset
+                    ).use {
+                        RainbowFontShader.begin(rainbow, rainbowX, rainbowY, rainbowOffset).use {
+                            fontRenderer.drawString(displayText, 0F, 2 - heightPadding, colorToUse, shadow)
+                            if (editMode && mc.currentScreen is GuiHudDesigner && editTicks <= 40) {
+                                fontRenderer.drawString("_", width - underscoreWidth, 0F, colorToUse, shadow)
+                            }
                         }
                     }
                 }
